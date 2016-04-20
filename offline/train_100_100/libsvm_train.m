@@ -1,8 +1,13 @@
 % this script read the cell image then train the SVM used for classification
 clear;
 clc;
-setup_libsvm_env;
+
+%before run this script set up the libsvm env
+%for linux env, run setup_libsvm_env.m;
+%for windows env, run  setup_win_libsvm_env.m;
+
 %read data from files
+
 fprintf('reading data...\n');
 [bead_label,bead_data]=libsvmread('./beads.libsvm');
 [circle_label,circle_data]=libsvmread('./no_beads.libsvm');
@@ -43,4 +48,4 @@ for j=1:5
 end
 fprintf('test done, 5 fold validation mean accuracy:%f%%\n',mean(result));
 %save the trained model
-%save('svm_model.mat','model');
+save('svm_model.mat','model');
