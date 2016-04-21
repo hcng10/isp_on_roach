@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# environment
+MATLAB_PATH=/vol/tools/Mathworks/Matlab/R2012b
+XILINX_PATH=/vol/tools/Xilinx/14.7/ISE_DS
+XILINX_PLATFORM=lin64
+
+# Finish environment setup
+source "${XILINX_PATH}/settings64.sh" > /dev/null
+export PATH="${PATH}:${XILINX}/ISE/bin/${XILINX_PLATFORM}:${XILINX_PATH}/ISE/sysgen/bin/${XILINX_PLATFORM}"
+export MATLAB="${MATLAB_PATH}"
+
+# Start MATLAB
+"${MATLAB}/bin/matlab"
