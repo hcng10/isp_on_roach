@@ -1,0 +1,21 @@
+--------------------------------- Version Log ----------------------------------
+Version                                 Path
+System Generator                        /vol/tools/Xilinx/14.7/ISE_DS/ISE/sysgen
+Matlab 8.0.0.783 (R2012b)               /vol/tools/Mathworks/Matlab/R2012b
+ISE                                     /vol/tools/Xilinx/14.7/ISE_DS/ISE
+--------------------------------------------------------------------------------
+Summary of Errors:
+Error 0001: The specified M-Function 'pingpongpang' could not be found.
+     Block: 'celldet12b/Block Alignment/pingpongpang/MCode'
+--------------------------------------------------------------------------------
+
+Error 0001:
+
+Reported by:
+  'celldet12b/Block Alignment/pingpongpang/MCode'
+
+Details:
+The specified M-Function 'pingpongpang' could not be found.
+Error occurred during "Block Configuration".
+
+--------------------------------------------------------------------------------
