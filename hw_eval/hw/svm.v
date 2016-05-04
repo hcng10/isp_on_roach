@@ -31,26 +31,31 @@ module svm(
     output wire signed [31:0] accumulatoroutput
 );
 
-parameter WaitState=0 ,ReadState=1, InputState=2, OutputState=3, JudgeState=4;
+parameter WaitState=0 ,ReadState=1, InputState=2, ComputeState=3, OutputState=4, JudgeState=5;
 parameter PeriodNum=16'd512;
 parameter PeriodLength=8'd16;
 parameter LocalNum=8'd16;
+
 reg[3:0] state=WaitState;
 reg[15:0] PeriodCounter=16'd0;
 reg[7:0] LocalCounter=8'd0;
 
 reg signed [31:0] accumulator=32'd0;
-reg [7:0] DataBuf[15:0];
+reg signed [31:0] bias=32'H00111af9;
 
 reg [12:0] rom_in;
 ROM rom(rom_in,rom_out);
 
-reg [7:0] mul_ud_in;
-mul_sfx_ufx multiplier(rom_out,mul_ud_in,mul_result_out);
+wire [7:0] ram_out;
+reg [1:0] ramrw=2'd0;//lock ram
+RAM ram(clk,ramrw,LocalCounter,ram_out,rddata);
+
+//reg [7:0] mul_ud_in;
+mul_sfx_ufx multiplier(rom_out,ram_out,mul_result_out);
 
 assign stateoutput=state;
 assign rom_in_output=rom_in;
-assign mul_ud_in_output=mul_ud_in;
+assign mul_ud_in_output=ram_out;
 assign periodcounteroutput=PeriodCounter;
 assign localcounteroutput=LocalCounter;
 assign accumulatoroutput=accumulator;
@@ -74,30 +79,17 @@ always @(posedge clk or negedge reset) begin
             ReadState:begin
                 //read from fifo 128 bits(16 byte)
                 PeriodCounter<= PeriodCounter+16'd1;
-                DataBuf[0]<=rddata[7:0];
-                DataBuf[1]<=rddata[15:8];
-                DataBuf[2]<=rddata[23:16];				
-                DataBuf[3]<=rddata[31:24];
-                DataBuf[4]<=rddata[39:32];
-                DataBuf[5]<=rddata[47:40];
-                DataBuf[6]<=rddata[55:48];                
-                DataBuf[7]<=rddata[63:56];
-                DataBuf[8]<=rddata[71:64];
-                DataBuf[9]<=rddata[79:72];
-                DataBuf[10]<=rddata[87:80];                
-                DataBuf[11]<=rddata[95:88];
-                DataBuf[12]<=rddata[103:96];
-                DataBuf[13]<=rddata[111:104];
-                DataBuf[14]<=rddata[119:112];                
-                DataBuf[15]<=rddata[127:120];
                 state<=InputState;
+                ramrw<=2'd2;//write ram
                 rdfifo<=1'd0;
                 LocalCounter<=8'd0;
             end
             InputState:begin
                 //compute the sum
                 if (LocalCounter>=LocalNum) begin
+                    LocalCounter<=8'd0;
                     if (PeriodCounter >=PeriodNum) begin
+                        accumulator <= accumulator+bias;
                         state <= JudgeState;
                     end
                     else begin
@@ -106,9 +98,12 @@ always @(posedge clk or negedge reset) begin
                 end
                 else begin
                     rom_in <= (PeriodCounter-1)*16+LocalCounter;
-                    mul_ud_in <= DataBuf[LocalCounter];
-                    state <= OutputState;
+                    ramrw<=2'd1;//read ram
+                    state <= ComputeState;
                 end
+            end
+            ComputeState:begin
+                state <= OutputState;
             end
             OutputState:begin
                 accumulator <= accumulator+mul_result_out;
@@ -124,7 +119,7 @@ always @(posedge clk or negedge reset) begin
                 end
                 objecttypeready<=1'b1;
                 state<=WaitState;
-                accumulator<=64'd0;
+                //accumulator<=64'd0;
                 PeriodCounter<=16'd0;
             end
         endcase

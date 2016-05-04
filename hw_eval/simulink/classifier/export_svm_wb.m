@@ -10,6 +10,7 @@ load svm_model.mat;
 
 weight=(model.sv_coef)'*model.SVs;
 bias = -model.rho;
+save('svm_wb.mat','weight','bias');
 
 %export the weight and bias in fixed point format
 fcoef=fopen(out_name,'w');
@@ -26,5 +27,8 @@ end
 fprintf(fcoef,'default: data <= 32''d0;\n');
 fprintf(fcoef,'endcase\n');
 fprintf(fcoef,'endmodule\n');
-
 fclose(fcoef);
+
+bias_convert=fi(bias,1,32,16);
+
+fprintf('bias hex: %s\n',bias_convert.hex);

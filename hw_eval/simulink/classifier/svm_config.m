@@ -99,8 +99,9 @@ function svm_config(this_block)
   this_block.addGeneric('WaitState','integer','0');
   this_block.addGeneric('ReadState','integer','1');
   this_block.addGeneric('InputState','integer','2');
-  this_block.addGeneric('OutputState','integer','3');
-  this_block.addGeneric('JudgeState','integer','4');
+  this_block.addGeneric('ComputeState','integer','3');
+  this_block.addGeneric('OutputState','integer','4');
+  this_block.addGeneric('JudgeState','integer','5');
   this_block.addGeneric('PeriodNum','integer','512');
   this_block.addGeneric('PeriodLength','integer','16');
   this_block.addGeneric('LocalNum','integer','16');
@@ -120,6 +121,7 @@ function svm_config(this_block)
   %    this_block.addFile('');
   this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/svm.v');
   this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/rom.v');
+  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/ram.v');
   this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/mul_sfx_ufx.v');
 
 return;

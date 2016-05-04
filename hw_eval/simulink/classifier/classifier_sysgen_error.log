@@ -5,19 +5,27 @@ Matlab 8.0.0.783 (R2012b)               /vol/tools/Mathworks/Matlab/R2012b
 ISE                                     /vol/tools/Xilinx/14.7/ISE_DS/ISE
 --------------------------------------------------------------------------------
 Summary of Errors:
-Error 0001: Illegal input type on port: we
-     Block: 'classifier/FIFO'
+Error 0001: HDL simulation model compilation failed.
+ERROR:HDLCompile...
+     Block: 'classifier/Black Box'
 --------------------------------------------------------------------------------
 
 Error 0001:
 
 Reported by:
-  'classifier/FIFO'
+  'classifier/Black Box'
 
 Details:
-The we port is being driven by a UFix_1_0.
-The we port must be a Bool.
+HDL simulation model compilation failed.
+ERROR:HDLCompiler:69 - "xlisim_svm.v" Line 9418: <clk> is not declared.
+ERROR:HDLCompiler:69 - "xlisim_svm.v" Line 9428: <clk> is not declared.
+ERROR:HDLCompiler:598 - "xlisim_svm.v" Line 9418: Module <RAM>
+ignored due to previous errors.
+ERROR:HDLCompiler:598 - "xlisim_svm.v" Line 9455: Module
+<mul_sfx_ufx> ignored due to previous errors.
+ERROR:HDLCompiler:598 - "xlisim_svm.v" Line 9475: Module
+<xlisim_svm> ignored due to previous errors.
 
-Error occurred during "Rate and Type Error Checking".
+Error occurred during "Simulation Initialization".
 
 --------------------------------------------------------------------------------

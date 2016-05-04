@@ -13,6 +13,6 @@ wire signed[39:0] result_buf;
 
 assign sdata_from_udata=udata;
 assign result_buf=sdata_from_udata*sdata;
-assign result=result_buf[39:8];
+assign result={result_buf[39],result_buf[30:0]};
 
 endmodule
