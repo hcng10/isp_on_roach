@@ -119,10 +119,10 @@ function svm_config(this_block)
 
   %    this_block.addFile('');
   %    this_block.addFile('');
-  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/svm.v');
-  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/rom.v');
-  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/ram.v');
-  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/hw/mul_sfx_ufx.v');
+  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/classifier/svm.v');
+  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/classifier/rom.v');
+  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/classifier/ram.v');
+  this_block.addFile('/home/maolin/Projects/isp_on_roach/hw_eval/classifier/mul_sfx_ufx.v');
 
 return;
 
