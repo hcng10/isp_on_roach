@@ -2,6 +2,10 @@
 //this module detect the boarders of the droplet
 //then re-sample to fixed size and output to a FIFO
 
+//`include "WindowSumCalc.v"
+//`include "AbsSumCalc.v"
+//`include "BgNoiseCalc.v"
+
 module detectobj(
     input clk,
     input ce,
@@ -26,9 +30,7 @@ module detectobj(
 //2. InObj: in droplet processing
 //3. OutObj: out of droplet processing
 //4. ResOut: resample and output 
-parameter BgWait=0, BgRead=1, BgCompute=2,
-          OutObjWait=3, OutObjRead=4,
-          InObjWait=5;
+parameter BgWait=0, BgRead=1, BgCompute=2,OutObjWait=3, OutObjRead=4,InObjWait=5;
 reg[4:0] state=BgWait;
 
 //each line have 21 period
@@ -41,14 +43,17 @@ reg [127:0] PeriodData;
 //then used for background subtraction and determine background threshold
 
 //Use Average of 8 lines to compute BgNoise of each column
-reg signed [7:0] BgNoise [335:0];
 //absolute sum of 8 lines in background
 reg signed [31:0] BgAbsSum;
-
 //current line absolute sum
 reg signed [31:0] CurAbsSum;
 wire signed [31:0] UpdatedAbsSum;
 AbsSumCalc abssum(PeriodData,CurAbsSum,UpdatedAbsSum);
+
+reg signed [15:0] BgNoise [335:0];
+reg [255:0] CurNoise;
+wire [255:0] UpdatedNoise;
+BgNoiseCalc bgnoise(PeriodData,CurNoise,UpdatedNoise);
 
 //absolute sum difference between current line and Background
 reg signed [31:0] AbsError;
@@ -66,6 +71,18 @@ reg [7:0] InObjTimesThres=8'd3;
 //aim to decrease the sensitivity of threshold method
 //window size : 8
 reg signed [31:0] LineAbsSum [7:0];
+wire signed [31:0] windowsum;
+WindowSumCalc WindowSum(
+    {   LineAbsSum[7],
+        LineAbsSum[6],
+        LineAbsSum[5],
+        LineAbsSum[4],
+        LineAbsSum[3],
+        LineAbsSum[2],
+        LineAbsSum[1],
+        LineAbsSum[0]},
+    windowsum
+);
 
 parameter BgLineNum=16'd8;
 reg [15:0] LineCounter=16'd0;
@@ -85,6 +102,12 @@ always @(posedge clk or negedge reset) begin
             //1. Stage Background Processing
             BgWait:begin
                 if (LineCounter>=BgLineNum) begin
+                    //compute average background noise
+                    for(i=0;i<336;i++) begin
+                        BgNoise[i] <= BgNoise[i]/BgLineNum;
+                    end
+                    //compute sum of abs sum window 
+                    BgAbsSum <= windowsum;
                     state <= OutObjWait;
                 end
                 else begin
@@ -93,21 +116,33 @@ always @(posedge clk or negedge reset) begin
                     end
                     else begin
                         rdfifo<=1'd1;
+                        PeriodCounter<= PeriodCounter+16'd1;
                         state<=BgRead;
                     end
                 end
             end
             BgRead:begin
-                //read from fifo 128 bits(16 byte)
                 rdfifo<=1'd0;
+                //read from fifo 128 bits(16 byte)
                 PeriodData<=rddata;
+                //input abs sum compute module
                 CurAbsSum<=LineAbsSum[LineCounter[2:0]];
-                PeriodCounter<= PeriodCounter+16'd1;
+                //input background noise compute module
+                for(i=0;i<16;i++) begin
+                    CurNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
+                end
                 state<=BgCompute;
             end
             BgCompute:begin
-                LineAbsSum[LineCounter[2:0]]<=UpdatedAbsSum;
+                //get abs result
+                LineAbsSum[LineCounter[2:0]] <= UpdatedAbsSum;
+                //get background noise
+                for(i=0;i<16;i++) begin
+                    BgNoise[(PeriodCounter-1)*16+i] <= UpdatedNoise[16*i +: 16];
+                end
+
                 if(PeriodCounter==PeriodNum) begin
+                    PeriodCounter <= 0;
                     LineCounter<=LineCounter+1;
                 end
                 state<=BgWait;
