@@ -11,14 +11,23 @@ for i=1:size(blk_empty,1)
     end
 end
 
+%use to transfer the data from uint8 to signed int 8
+%the original data is signed int 8
+%innput into simulink become uint 8
+%so finial need to transfer it back to signed int 8 
+%then it's the same 
+unsign2sign_tmp=fi(0,1,8,0);
+
 blkbyte=zeros(size(blkword_filter,1)*16,1);
 blkbin=blkword_filter.bin;
 for i=1:size(blkword_filter,1)
     for j=1:16
         k=16-j+1;
-        blkbyte((i-1)*16+k)=bin2dec(blkbin(i,((j-1)*8+1):j*8));
+        %re-interpret the data from uint8 to signed int 8
+        unsign2sign_tmp.bin=blkbin(i,((j-1)*8+1):j*8);
+        blkbyte((i-1)*16+k)=unsign2sign_tmp;
     end
 end
-%strip_index=floor(size(blkbyte)/(16*blk_per_line))*16*blk_per_line;
-%blkbyte=blkbyte(1:strip_index);
+strip_index=floor(size(blkbyte)/(16*blk_per_line))*16*blk_per_line;
+blkbyte=blkbyte(1:strip_index);
 img=vec2mat(blkbyte,16*blk_per_line);

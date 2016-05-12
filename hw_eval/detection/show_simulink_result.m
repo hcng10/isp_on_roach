@@ -1,3 +1,3 @@
-align_image_simulink= blktoimage(align_blk,blk_ready);
-image(align_image_simulink);
+align_img=align2image(align_out,align_empty);
+image(align_img);
 colormap jet;

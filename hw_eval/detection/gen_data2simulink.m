@@ -50,7 +50,7 @@ for dataset=bead_dataset
                 return;
             elseif P_shift=='s'
                 tinyvals16b=adcvals16b;
-                T=[1:size(tinyvals16b,1)]';
+                T=[0:size(tinyvals16b,1)-1]';
                 save(strcat(output_prefix,'plot_',num2str(dataset),'_batch_',num2str(i),'_simulink','.mat'),'tinyvals16b','T','imgrgb','imgB');
                 break;
             elseif size(P_shift,2)==1
