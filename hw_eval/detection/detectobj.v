@@ -18,42 +18,55 @@ module detectobj(
     //after generate config.m use this code with initial, or simulink report
     //error
     //output reg rdfifo=1'd0,
-
+    
     //use for debug
     output wire [4:0] stateoutput,
     output wire [7:0] periodcounteroutput,
     output wire [7:0] linecounteroutput
+    output reg writedata,
+    output reg [127:0] detectdata,
+    output reg writesize,
+    output reg [127:0] detectsize,
     );
 
 //FSM : 4 stages
-//1. Bg: background subtraction and abs sum
-//2. InObj: in droplet processing
-//3. OutObj: out of droplet processing
-//4. ResOut: resample and output 
-parameter BgWait=0, BgRead=1, BgCompute=2,OutObjWait=3, OutObjRead=4,InObjWait=5;
-reg[4:0] state=BgWait;
+//1. Bg: background Noise Calculation for further subtraction
+//2. init: Initialize the detection threshold
+//3. InObj: in droplet processing
+//4. OutObj: out of droplet processing
+//5. ResOut: resample and output
+localparam BgWait=0, BgRead=1, BgCompute=2;
+localparam InitWait=3, InitRead=4;
+localparam OutObjWait=3, OutObjRead=4,InObjWait=5;
+
+reg[4:0] state;
 
 //each line have 21 period
 parameter PeriodNum=8'd21;
 reg[7:0] PeriodCounter=8'd0;
 //reg to store the data read from FIFO
 reg [127:0] PeriodData;
+reg [127:0] DataNoNoise;
 
 //used to store and compute the background information
 //then used for background subtraction and determine background threshold
 
 //Use Average of 8 lines to compute BgNoise of each column
 //absolute sum of 8 lines in background
-reg signed [31:0] BgAbsSum;
-//current line absolute sum
-reg signed [31:0] CurAbsSum;
-wire signed [31:0] UpdatedAbsSum;
-AbsSumCalc abssum(PeriodData,CurAbsSum,UpdatedAbsSum);
-
 reg signed [15:0] BgNoise [335:0];
 reg [255:0] CurNoise;
 wire [255:0] UpdatedNoise;
 BgNoiseCalc bgnoise(PeriodData,CurNoise,UpdatedNoise);
+
+wire [127:0] DataNoNoise;
+reg [255:0] PeriodNoise;
+RemoveNoise removenoise(PeriodData,PeriodNoise,DataNoNoise);
+
+reg signed [31:0] BgAbsSum;
+//current line absolute sum
+reg signed [31:0] CurAbsSum;
+wire signed [31:0] UpdatedAbsSum;
+AbsSumCalc abssum(DataNoNoise,CurAbsSum,UpdatedAbsSum);
 
 //absolute sum difference between current line and Background
 reg signed [31:0] AbsError;
@@ -84,6 +97,7 @@ WindowSumCalc WindowSum(
     windowsum
 );
 
+parameter InitLineNum=16'd8;
 parameter BgLineNum=16'd8;
 reg [15:0] LineCounter=16'd0;
 
@@ -96,28 +110,28 @@ integer i;
 always @(posedge clk or negedge reset) begin
     if (~reset) begin
         state <= BgWait;
-    end 
+        //Initializ other state varible like all kinds of counters
+    end
     else begin
-        case (state) 
-            //1. Stage Background Processing
+        case (state)
+            //1. Calculate Background Noise
             BgWait:begin
                 if (LineCounter>=BgLineNum) begin
                     //compute average background noise
                     for(i=0;i<336;i++) begin
                         BgNoise[i] <= BgNoise[i]/BgLineNum;
                     end
-                    //compute sum of abs sum window 
-                    BgAbsSum <= windowsum;
-                    state <= OutObjWait;
+                    LineCounter<=0;
+                    state <= InitWait;
                 end
                 else begin
                     if (rdempty== 1'b1) begin
                         state<=BgWait;
                     end
                     else begin
-                        rdfifo<=1'd1;
+                        rdfifo <= 1'd1;
                         PeriodCounter<= PeriodCounter+16'd1;
-                        state<=BgRead;
+                        state <= BgRead;
                     end
                 end
             end
@@ -125,17 +139,21 @@ always @(posedge clk or negedge reset) begin
                 rdfifo<=1'd0;
                 //read from fifo 128 bits(16 byte)
                 PeriodData<=rddata;
-                //input abs sum compute module
-                CurAbsSum<=LineAbsSum[LineCounter[2:0]];
                 //input background noise compute module
-                for(i=0;i<16;i++) begin
-                    CurNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
+                if(LineCounter == 1) begin
+                    //first line need to initialize the background noise reg
+                    for(i=0;i<16;i++) begin
+                        CurNoise[16*i +: 16] <= 0;
+                    end
+                end
+                else begin
+                    for(i=0;i<16;i++) begin
+                        CurNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
+                    end
                 end
                 state<=BgCompute;
             end
             BgCompute:begin
-                //get abs result
-                LineAbsSum[LineCounter[2:0]] <= UpdatedAbsSum;
                 //get background noise
                 for(i=0;i<16;i++) begin
                     BgNoise[(PeriodCounter-1)*16+i] <= UpdatedNoise[16*i +: 16];
@@ -148,7 +166,55 @@ always @(posedge clk or negedge reset) begin
                 state<=BgWait;
             end
 
-            //2. Out Object Processing
+            //2. initialize detection threshold
+            InitWait:begin
+                if (LineCounter>=InitLineNum) begin
+                    BgAbsSum <= windowsum;
+                    LineCounter<=0;
+                    state <= OutObjWait;
+                end
+                else begin
+                    if (rdempty== 1'b1) begin
+                        state<=InitWait;
+                    end
+                    else begin
+                        rdfifo <= 1'd1;
+                        PeriodCounter<= PeriodCounter+16'd1;
+                        state <= InitRead;
+                    end
+                end
+            end
+            InitRead:begin
+                rdfifo<=1'd0;
+                //read from fifo 128 bits(16 byte)
+                PeriodData<=rddata;
+                //remove background noise 
+                for(i=0;i<16;i++) begin
+                    PeriodNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
+                end
+                state<=InitBgRm;
+            end
+            InitBgRm:begin
+                //input abs sum compute module
+                if(PeriodCounter==1) begin
+                    CurAbsSum <= 0;
+                end
+                else begin
+                    CurAbsSum <= LineAbsSum[LineCounter[2:0]];
+                end
+                state<=InitCompute;
+            end
+            InitCompute:begin
+                //get abs result
+                LineAbsSum[LineCounter[2:0]] <= UpdatedAbsSum;
+                state <= InitWait;
+                if(PeriodCounter==PeriodNum) begin
+                    PeriodCounter <= 0;
+                    LineCounter<=LineCounter+1;
+                end
+            end
+
+            //3. Out Object Processing
             OutObjWait:begin
                 if (AboveBgTimes>=OutObjTimesThres) begin
                     state<=InObjWait;
@@ -167,12 +233,12 @@ always @(posedge clk or negedge reset) begin
 
             end
 
-            //3. In Object Processing
+            //4. In Object Processing
             InObjWait:begin
             end
 
-            //4. Resample and output
-            
+            //5. Resample and output
+
             default:state<=BgWait;
         endcase
     end
