@@ -7,8 +7,8 @@ function imgsub = bgsubtract(img)
 
 % Method 2:
 % On hardware, use an average of 8 sampled lines
-bg = img(1,:);
-for i=2:7
+bg = img(2,:);
+for i=3:8
     bg = bg + img(i,:);
 end
 bg = bg / 8;
