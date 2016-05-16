@@ -11,7 +11,7 @@ integer i;
 
 always @(*) begin
     //acc level 1, input slicing
-    for(i=0;i<8;i++) begin
+    for(i=0;i<8;i=i+1) begin
         AccTreeL1[i] = windowdata[32*i +: 32];
     end
     //acc level 2
@@ -26,3 +26,4 @@ always @(*) begin
 end
 
 endmodule
+

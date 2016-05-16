@@ -10,11 +10,11 @@ reg signed [15:0] CurBgData [15:0];
 integer i;
 
 always @(*) begin
-    for(i=0;i<16;i++) begin
+    for(i=0;i<16;i=i+1) begin
         Data[i] = PeriodData[8*i +: 8];
         CurBgData[i] = CurNoise[16*i +: 16];
     end
-    for(i=0;i<16;i++) begin
+    for(i=0;i<16;i=i+1) begin
         UpdatedNoise[16*i +: 16] = Data[i] + CurBgData[i];
     end
 end

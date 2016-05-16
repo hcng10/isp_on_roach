@@ -1,0 +1,16 @@
+BgNoise[(PeriodCounter-1)*16+0] <= UpdatedNoise[15:0];
+BgNoise[(PeriodCounter-1)*16+1] <= UpdatedNoise[31:16];
+BgNoise[(PeriodCounter-1)*16+2] <= UpdatedNoise[47:32];
+BgNoise[(PeriodCounter-1)*16+3] <= UpdatedNoise[63:48];
+BgNoise[(PeriodCounter-1)*16+4] <= UpdatedNoise[79:64];
+BgNoise[(PeriodCounter-1)*16+5] <= UpdatedNoise[95:80];
+BgNoise[(PeriodCounter-1)*16+6] <= UpdatedNoise[111:96];
+BgNoise[(PeriodCounter-1)*16+7] <= UpdatedNoise[127:112];
+BgNoise[(PeriodCounter-1)*16+8] <= UpdatedNoise[143:128];
+BgNoise[(PeriodCounter-1)*16+9] <= UpdatedNoise[159:144];
+BgNoise[(PeriodCounter-1)*16+10] <= UpdatedNoise[175:160];
+BgNoise[(PeriodCounter-1)*16+11] <= UpdatedNoise[191:176];
+BgNoise[(PeriodCounter-1)*16+12] <= UpdatedNoise[207:192];
+BgNoise[(PeriodCounter-1)*16+13] <= UpdatedNoise[223:208];
+BgNoise[(PeriodCounter-1)*16+14] <= UpdatedNoise[239:224];
+BgNoise[(PeriodCounter-1)*16+15] <= UpdatedNoise[255:240];

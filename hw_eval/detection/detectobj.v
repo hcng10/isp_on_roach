@@ -134,7 +134,7 @@ always @(posedge clk or negedge reset) begin
             BgWait:begin
                 if (LineCounter>=BgLineNum) begin
                     //compute average background noise
-                    for(i=0;i<336;i++) begin
+                    for(i=0;i<336;i=i+1) begin
                         BgNoise[i] <= BgNoise[i]/BgLineNum;
                     end
                     LineCounter<=0;
@@ -158,12 +158,12 @@ always @(posedge clk or negedge reset) begin
                 //input background noise compute module
                 if(LineCounter == 1) begin
                     //first line need to initialize the background noise reg
-                    for(i=0;i<16;i++) begin
+                    for(i=0;i<16;i=i+1) begin
                         CurNoise[16*i +: 16] <= 0;
                     end
                 end
                 else begin
-                    for(i=0;i<16;i++) begin
+                    for(i=0;i<16;i=i+1) begin
                         CurNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
                     end
                 end
@@ -171,7 +171,7 @@ always @(posedge clk or negedge reset) begin
             end
             BgCompute:begin
                 //get background noise
-                for(i=0;i<16;i++) begin
+                for(i=0;i<16;i=i+1) begin
                     BgNoise[(PeriodCounter-1)*16+i] <= UpdatedNoise[16*i +: 16];
                 end
                 if(PeriodCounter==PeriodNum) begin
@@ -204,7 +204,7 @@ always @(posedge clk or negedge reset) begin
                 //read from fifo 128 bits(16 byte)
                 PeriodData<=rddata;
                 //remove background noise
-                for(i=0;i<16;i++) begin
+                for(i=0;i<16;i=i+1) begin
                     PeriodNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
                 end
                 state<=InitBgRm;
@@ -250,7 +250,7 @@ always @(posedge clk or negedge reset) begin
                 //read from fifo 128 bits(16 byte)
                 PeriodData<=rddata;
                 //remove background noise
-                for(i=0;i<16;i++) begin
+                for(i=0;i<16;i=i+1) begin
                     PeriodNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
                 end
                 state<=OutObjBgRm;
@@ -304,7 +304,7 @@ always @(posedge clk or negedge reset) begin
                 //read from fifo 128 bits(16 byte)
                 PeriodData<=rddata;
                 //remove background noise
-                for(i=0;i<16;i++) begin
+                for(i=0;i<16;i=i+1) begin
                     PeriodNoise[16*i +: 16] <= BgNoise[(PeriodCounter-1)*16+i];
                 end
                 state<=InObjBgRm;
