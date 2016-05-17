@@ -12,7 +12,7 @@ for i=3:8
     bg = bg + img(i,:);
 end
 bg = bg / 8;
-imgsub = bsxfun(@minus,img, bg);
+imgsub = bsxfun(@minus,img(9:end,:), bg);
 
 %{
 %scale to color map

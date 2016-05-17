@@ -1,6 +1,6 @@
 %this script plot the detection simulink output 
 graph_num=3;
-graph_range=1:2000;
+graph_range=1:100000;
 
 graph_index=1;
 
@@ -10,24 +10,32 @@ title('state');
 graph_index=graph_index+1;
 
 subplot(graph_num,1,graph_index);
-stairs(periodcounter.Data(graph_range))
-title('periodcount');
+stairs(windowsum.Data(graph_range))
+title('windowsum');
 graph_index=graph_index+1;
+
+detect_img=align2image(detect_data.Data,data_empty.Data);
+subplot(graph_num,1,graph_index);
+image(detect_img);
+title('detect object');
+graph_index=graph_index+1;
+
+
+%{
 
 subplot(graph_num,1,graph_index);
 stairs(linecounter.Data(graph_range))
 title('linecount');
 graph_index=graph_index+1;
 
-%{
 subplot(graph_num,1,graph_index);
-stairs(rdfifo.Data(graph_range))
-title('read fifo control');
+stairs(periodcounter.Data(graph_range))
+title('periodcount');
 graph_index=graph_index+1;
 
 subplot(graph_num,1,graph_index);
 stairs(fifoout.Data(graph_range));
-title('fifoout');
+title('');
 graph_index=graph_index+1;
 
 subplot(graph_num,1,graph_index);

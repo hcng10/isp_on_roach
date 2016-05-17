@@ -5,17 +5,23 @@ Matlab 8.0.0.783 (R2012b)               /vol/tools/Mathworks/Matlab/R2012b
 ISE                                     /vol/tools/Xilinx/14.7/ISE_DS/ISE
 --------------------------------------------------------------------------------
 Summary of Errors:
-Error 0001: Bool type output port dout gets indeterminate value.
-
-     Block: 'detection/Convert'
+Error 0001: Block initialization code, "detectobj_config", caused the...
+     Block: 'detection/Black Box'
 --------------------------------------------------------------------------------
 
 Error 0001:
 
 Reported by:
-  'detection/Convert'
+  'detection/Black Box'
 
 Details:
-Bool type output port dout gets indeterminate value.
+Block initialization code, "detectobj_config", caused the MATLAB
+error: 
+Error using xlcallcpp
+Error calling function getPort.  The return value from the
+function is a null pointer.
+Error occurred during "HDL Netlist Configuration".
+
+Error occurred during "Simulation Initialization".
 
 --------------------------------------------------------------------------------

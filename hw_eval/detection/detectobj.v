@@ -30,7 +30,7 @@ module detectobj(
     output reg writesize=1'd0,
 
     output reg [127:0] detectdata,
-    output reg signed [15:0] detectsize,
+    output reg [31:0] detectsize,
 
     //output use for debug
     output wire signed [31:0] windowsum,
@@ -87,7 +87,7 @@ PeriodAbsSumCalc periodabssum(DataNoNoise,PeriodAbsSum);
 reg signed [31:0] AbsError;
 
 //absolute sum difference threshold between current line and Background
-reg signed [31:0] AbsErrThres;
+reg signed [31:0] AbsErrThres=1000;
 reg [7:0] AboveBgTimes=8'd0;
 reg [7:0] OutObjTimesThres=8'd3;
 
@@ -112,7 +112,7 @@ WindowSumCalc WindowSum(
 
 parameter InitLineNum=16'd8;
 parameter BgLineNum=16'd8;
-reg [15:0] LineCounter=16'd0;
+reg [31:0] LineCounter=31'd0;
 
 assign stateoutput=state;
 assign periodcounteroutput=PeriodCounter;
@@ -222,17 +222,18 @@ always @(posedge clk or negedge reset) begin
             InitCompute:begin
                 //get abs result
                 LineAbsSum[LineCounter[2:0]] <= UpdatedAbsSum;
-                state <= InitWait;
                 if(PeriodCounter==PeriodNum) begin
                     PeriodCounter <= 0;
                     LineCounter<=LineCounter+1;
                 end
+                state <= InitWait;
             end
 
             //3. Out Object Processing
             OutObjWait:begin
                 writesize <= 0;
                 if (AboveBgTimes>=OutObjTimesThres) begin
+                    LineCounter <= 0;
                     state<=InObjWait;
                 end
                 else begin
@@ -241,6 +242,7 @@ always @(posedge clk or negedge reset) begin
                     end
                     else begin
                         rdfifo<=1'd1;
+                        PeriodCounter<= PeriodCounter+16'd1;
                         state<=OutObjRead;
                     end
                 end
@@ -273,7 +275,9 @@ always @(posedge clk or negedge reset) begin
                     LineCounter<=LineCounter+1;
                     state <= OutObjJudge;
                 end
-                state<=OutObjWait;
+                else begin
+                    state<=OutObjWait;
+                end
             end
             OutObjJudge:begin
                 if(windowsum-BgAbsSum>AbsErrThres) begin
@@ -285,9 +289,10 @@ always @(posedge clk or negedge reset) begin
             //4. In Object Processing
             InObjWait:begin
                 if (BelowInObjTimes>=InObjTimesThres) begin
-                    state<=OutObjWait;
                     detectsize <= LineCounter;
                     writesize <= 1;
+                    LineCounter <= 0;
+                    state<=OutObjWait;
                 end
                 else begin
                     if (rdempty== 1'b1) begin
@@ -295,6 +300,7 @@ always @(posedge clk or negedge reset) begin
                     end
                     else begin
                         rdfifo<=1'd1;
+                        PeriodCounter<= PeriodCounter+16'd1;
                         state<=InObjRead;
                     end
                 end
@@ -310,9 +316,10 @@ always @(posedge clk or negedge reset) begin
                 state<=InObjBgRm;
             end
             InObjBgRm:begin
-                //input abs sum compute module
+                //output detected Background-removed data into fifo
                 detectdata <= DataNoNoise;
                 writedata <= 1;
+                //input abs sum compute module
                 if(PeriodCounter==1) begin
                     CurAbsSum <= 0;
                 end
@@ -330,7 +337,9 @@ always @(posedge clk or negedge reset) begin
                     LineCounter<=LineCounter+1;
                     state <= InObjJudge;
                 end
-                state<=InObjWait;
+                else begin
+                    state<=InObjWait;
+                end
             end
             InObjJudge:begin
                 if(windowsum-BgAbsSum<AbsErrThres) begin
